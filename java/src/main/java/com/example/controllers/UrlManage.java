@@ -2,9 +2,12 @@ package com.example.controllers;
 
 import ch.qos.logback.classic.Logger;
 import jdk.jfr.ContentType;
+import lombok.extern.slf4j.Slf4j;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -34,6 +37,7 @@ import com.example.models.Url;
 
 @Controller
 @RequestMapping
+@EnableCaching
 public class UrlManage {
 
 	@Autowired
@@ -87,11 +91,16 @@ public class UrlManage {
 	
 	@GetMapping("/{urlString}")
 	private ResponseEntity<Void> redirectToUrl(@PathVariable String urlString){
-		Url url = urlMongo.findByNewPath(urlString);
+		Url url = getUrl(urlString);
 		System.out.println(urlString);
 		return ResponseEntity.status(HttpStatus.FOUND)
 				.location(URI.create(url.getPath()))
 				.build();
+	}
+	
+	@Cacheable(value = "paths")
+	private Url getUrl(String url) {
+		return urlMongo.findByNewPath(urlString);
 	}
 	
 	
